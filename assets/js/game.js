@@ -27,13 +27,14 @@ class Game {
 
     start(){
         console.log("Tckb ns yt ujvjctr")
-        this.$zone.innerHTML = '';
+        this.$zone.html('');
         //this.generateField();
         for (let i = 0; i < this.width; i++){
             for (let j = 0; j < this.height; j++){
                 this.generate(Stone, i, j)
             }
         }
+        this.generate(Player, 0, 0)
         this.loop();
     }
 
@@ -198,18 +199,18 @@ class Drawable {
 }
 
 class Player extends Drawable {
-    constructor(game) {
-        super(game);
-        this.w = 244;
-        this.h = 109;
-        this.x = this.game.$zone.width() / 2 - this.w / 2;
-        this.y = this.game.$zone.height() - this.h;
+    constructor(game, x, y) {
+        super(game, x, y);
+        this.w = 64;
+        this.h = 64;
         this.speedPerFrame = 20;
         this.skillTimer = 0;
         this.couldTimer = 0;
         this.keys = {
             ArrowLeft: false,
             ArrowRight: false,
+            ArrowUp: false,
+            ArrorDown: false,
             Space: false,
         }; // Вообще говоря, вводить как бы виртуальные флаги для клавиш - хорошая идея. Надо это запомнить
         this.createElement();
@@ -265,8 +266,8 @@ class Player extends Drawable {
 }
 
 class Fruits extends Drawable{
-    constructor(game) {
-        super(game);
+    constructor(game, x, y) {
+        super(game, x, y);
         this.createElement();
     }
 
@@ -299,20 +300,20 @@ class Fruits extends Drawable{
 }
 
 class Stone extends Fruits {
-    constructor(game) {
-        super(game);
+    constructor(game, x, y) {
+        super(game, x, y);
     }
 }
 
 class Ground extends Fruits {
-    constructor(game) {
-        super(game);
+    constructor(game, x, y) {
+        super(game, x, y);
     }
 }
 
 class Heart extends Fruits {
-    constructor(game) {
-        super(game);
+    constructor(game, x, y) {
+        super(game, x, y);
     }
 }
 
