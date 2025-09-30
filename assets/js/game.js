@@ -7,7 +7,7 @@ class Game {
         this.width = Math.floor(this.$zone.width() / 64)
         this.height = Math.floor(this.$zone.height() / 64)
         
-        this.field = [];
+        this.field = [...Array(this.width)].map(e => Array(this.width));
 
         this.player = this.generate(Player);
         this.fruits = [Ground, Stone, Heart]
@@ -27,14 +27,30 @@ class Game {
 
     start(){
         console.log("Tckb ns yt ujvjctr")
+        
         this.$zone.html('');
+        $('#hudUsername').html(this.name);
         //this.generateField();
         for (let i = 0; i < this.width; i++){
             for (let j = 0; j < this.height; j++){
-                this.generate(Stone, i, j)
+
+                this.field[i][j] = this.generate(Ground, i, j)
+                if (random(1, 15) == 1) this.field[i][j] = this.generate(Stone, i, j)
+                
             }
         }
-        this.generate(Player, 0, 0)
+
+        this.player = this.generate(Player, 0, 0)
+
+        /*
+        for (let i = 0; i < this.width; i++){
+            for (let j = 0; j < this.height; j++){
+
+                this.generate(this.field[i][j], i, j)
+                
+            }
+        }
+        */
         this.loop();
     }
 
@@ -73,7 +89,7 @@ class Game {
             $('#collectedFruits').html(`Вы собрали ${this.points} фруктов`);
             $('#congratulation').html(`Вы выиграли!`);
         } else {
-            $('#playerName').html(`Жаль, ${this.name}`);
+            $('#hudUsername').html(`Жаль, ${this.name}`);
             $('#endTime').html(`Ваше время: ${time.m1}${time.m2}:${time.s1}${time.s2}`)
             $('#collectedFruits').html(`Вы собрали ${this.points} фруктов`);
             $('#congratulation').html(`Вы проиграли!`);
@@ -123,7 +139,7 @@ class Game {
     
     generate(className, x, y) {
         console.log(x, y)
-        let element = new className(this, x*64, y*64);
+        let element = new className(this, x, y);
         this.elements.push(element);
         return element;
     }
@@ -169,10 +185,16 @@ class Drawable {
         this.y += this.offsets.y;
     }
 
+    move(dx, dy){
+        if (this.x + dx < 0 || this.x + dx > this.game.width || this.y + dy < 0 || this.y + dy > this.game.height) return
+        if (!this.game.field[this.x+dx][this.y+dy] || this.game.field[this.y+dy][this.x+dx].constructor == Stone)
+    }
+
     draw(){
+        
         this.$element.css({
-            left: this.x + "px",
-            top: this.y + "px",
+            left: this.x*64 + "px",
+            top: this.y*64 + "px",
         })
     }
     
@@ -203,14 +225,18 @@ class Player extends Drawable {
         super(game, x, y);
         this.w = 64;
         this.h = 64;
-        this.speedPerFrame = 20;
+        this.speedPerFrame = 1;
         this.skillTimer = 0;
         this.couldTimer = 0;
         this.keys = {
+            KeyW: false,
+            KeyA: false,
+            KeyD: false,
+            KeyS: false,
             ArrowLeft: false,
             ArrowRight: false,
             ArrowUp: false,
-            ArrorDown: false,
+            ArrowDown: false,
             Space: false,
         }; // Вообще говоря, вводить как бы виртуальные флаги для клавиш - хорошая идея. Надо это запомнить
         this.createElement();
@@ -239,13 +265,16 @@ class Player extends Drawable {
     }
 
     update(){
-        if (this.keys.ArrowLeft && this.x > 0) {
-            this.offsets.x = -this.speedPerFrame;
-        } else if (this.keys.ArrowRight && this.x < this.game.$zone.width() - this.w){
-            this.offsets.x = this.speedPerFrame;
-        } else {
-            this.offsets.x = 0;
+        if ((this.keys.ArrowLeft || this.keys.KeyA) && this.x - 1 >= 0) {
+            this.x -= this.speedPerFrame;
+        } else if ((this.keys.ArrowRight || this.keys.KeyD) && this.x + 2 <= this.game.width){
+            this.x += this.speedPerFrame;
+        } else if ((this.keys.ArrowUp || this.keys.KeyW) && this.y - 1 >= 0) {
+            this.y -= this.speedPerFrame;
+        } else if ((this.keys.ArrowDown || this.keys.KeyS) && this.y + 1 + 1 <= this.game.height){
+            this.y += this.speedPerFrame;
         }
+
         if (this.keys.Space && this.couldTimer === 0){
             this.skillTimer++;
             $('#skill').html(`осталось ${Math.ceil((240 - this.skillTimer) / 60)}`);
@@ -261,6 +290,11 @@ class Player extends Drawable {
             this.skillTimer = 0;
             $('#skill').html('Готово');
         }
+
+        for (var key in this.keys){
+            this.changeKeyStatus(key, false)
+        }
+
         super.update();
     }
 }
@@ -341,6 +375,9 @@ window.onload = () => {
         }
     }, 500)
 }
+
+
+
 
 /*
 window.addEventListener('load', () => {
