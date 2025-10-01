@@ -34,12 +34,15 @@ class Game {
         for (let i = 0; i < this.width; i++){
             for (let j = 0; j < this.height; j++){
 
-                this.field[i][j] = this.generate(Ground, i, j)
-                if (random(1, 15) == 1) this.field[i][j] = this.generate(Stone, i, j)
+                
+                if (random(1, 10) == 1 && i != 0 && j != this.height-1) this.field[i][j] = this.generate(Stone, i, j)
+                else this.field[i][j] = this.generate(Ground, i, j)
                 
             }
         }
 
+        this.field[0][0].$element.remove()
+        this.field[0][0] = false
         this.player = this.generate(Player, 0, 0)
 
         /*
@@ -135,6 +138,15 @@ class Game {
             e.update();
             e.draw();
         })
+
+        for (let i = 0; i < this.width; i++){
+            for (let j = 0; j < this.height; j++){
+                if(this.field[i][j]){
+                    this.field[i][j].update();
+                    this.field[i][j].draw();
+                }
+            }
+        }
     }
     
     generate(className, x, y) {
@@ -169,6 +181,7 @@ class Drawable {
         this.y = y;
         this.h = 0;
         this.w = 0;
+        this.state = "still"
         this.offsets = {
             x: 0,
             y: 0
@@ -186,8 +199,23 @@ class Drawable {
     }
 
     move(dx, dy){
+        if(this.state == "falling") return
+        //console.log(this.game.field)
         if (this.x + dx < 0 || this.x + dx > this.game.width || this.y + dy < 0 || this.y + dy > this.game.height) return
-        if (!this.game.field[this.x+dx][this.y+dy] || this.game.field[this.y+dy][this.x+dx].constructor == Stone)
+        if (this.game.field[this.x+dx][this.y+dy]) return
+        
+        if(this.state == "still"){
+            this.state = "falling"
+            console.log("blog")
+            setTimeout(() =>{
+                console.log("vlog")
+                this.game.field[this.x][this.y] = false
+                this.game.field[this.x+dx][this.y+dy] = this
+                this.x += dx
+                this.y += dy
+                this.state = "still"
+            }, 1000)
+        }
     }
 
     draw(){
@@ -254,6 +282,22 @@ class Player extends Drawable {
         }
     }
 
+    move(dx, dy){
+        console.log(this.game.field)
+        if (this.x + dx < 0 || this.x + dx > this.game.width || this.y + dy < 0 || this.y + dy > this.game.height) return
+        if (this.game.field[this.x+dx][this.y+dy].constructor == Stone) return
+        
+        let target_cell = this.game.field[this.x+dx][this.y+dy]
+
+        if (target_cell.constructor == Ground){
+            target_cell.$element.remove()
+            this.game.field[this.x+dx][this.y+dy] = false
+        }
+        this.x += dx
+        this.y += dy
+        //target_cell = this
+    }
+
     applySkill() {
         for (let i = 1; i < this.game.elements.length; i++) {
             if (this.game.elements[i].x < this.x + (this.w / 2)){
@@ -266,13 +310,13 @@ class Player extends Drawable {
 
     update(){
         if ((this.keys.ArrowLeft || this.keys.KeyA) && this.x - 1 >= 0) {
-            this.x -= this.speedPerFrame;
+            this.move(-1, 0)
         } else if ((this.keys.ArrowRight || this.keys.KeyD) && this.x + 2 <= this.game.width){
-            this.x += this.speedPerFrame;
+            this.move(1, 0)
         } else if ((this.keys.ArrowUp || this.keys.KeyW) && this.y - 1 >= 0) {
-            this.y -= this.speedPerFrame;
+            this.move(0, -1)
         } else if ((this.keys.ArrowDown || this.keys.KeyS) && this.y + 1 + 1 <= this.game.height){
-            this.y += this.speedPerFrame;
+            this.move(0, 1)
         }
 
         if (this.keys.Space && this.couldTimer === 0){
@@ -333,7 +377,20 @@ class Fruits extends Drawable{
     }
 }
 
-class Stone extends Fruits {
+
+class Heart extends Fruits {
+    constructor(game, x, y) {
+        super(game, x, y);
+    }
+
+    update(){
+        if (this.state=="still")
+
+            this.move(0, 1);
+    }
+}
+
+class Stone extends Heart {
     constructor(game, x, y) {
         super(game, x, y);
     }
@@ -345,11 +402,7 @@ class Ground extends Fruits {
     }
 }
 
-class Heart extends Fruits {
-    constructor(game, x, y) {
-        super(game, x, y);
-    }
-}
+
 
 
 let random = (min, max) => {
